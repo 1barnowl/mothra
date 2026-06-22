@@ -1,0 +1,56 @@
+# Healing Core v0.6 — Policy + DSL Rules
+# Hot-reload: POST /api/v1/policy/reload  or  kill -HUP <pid>
+
+max_automated_attempts: 3
+max_cost_per_fix: 0.6
+max_impact_per_fix: 0.4
+human_approval_required_above_impact: 0.7
+cooldown_seconds: 30.0
+storm_threshold: 5
+
+escalate_on_categories: [SECURITY, MALWARE]
+auto_retry_on_categories: [TRANSIENT, NETWORK, SERVICE]
+
+pagerduty_key: ""
+slack_webhook:  ""
+
+monitor:
+  cpu_warn: 80.0
+  cpu_crit: 95.0
+  mem_warn: 80.0
+  mem_crit: 92.0
+  disk_warn: 85.0
+  disk_crit: 95.0
+  poll_interval_s: 5.0
+  confirmation_runs: 2
+
+rules:
+  - id: rule_security_escalate
+    when: {categories: [SECURITY, MALWARE]}
+    then: {action: escalate_immediately}
+    priority: 100
+
+  - id: rule_critical_hardware
+    when: {category: HARDWARE, severity: CRITICAL}
+    then: {action: escalate_immediately}
+    priority: 95
+
+  - id: rule_suppress_test_actors
+    when: {actor_matches: "test_*"}
+    then: {action: suppress}
+    priority: 90
+
+  - id: rule_auto_network
+    when: {categories: [NETWORK, TRANSIENT]}
+    then: {action: allow_auto, max_attempts: 5}
+    priority: 40
+
+  - id: rule_service_auto
+    when: {category: SERVICE, risk_below: 0.7}
+    then: {action: allow_auto, max_attempts: 3}
+    priority: 35
+
+  - id: rule_unknown_notify
+    when: {category: UNKNOWN}
+    then: {action: notify_only}
+    priority: 30
