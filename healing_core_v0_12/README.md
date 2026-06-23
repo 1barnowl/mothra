@@ -1,4 +1,4 @@
-# HealingCore v0.8
+# HealingCore/MOTHRA
 
 Policy-driven, self-healing subsystem — detects, classifies, contains and
 remediates faults while preserving auditability and safe recovery.
